@@ -1,0 +1,10 @@
+{
+    "uuid": "minibar@essembeh.org",
+    "name": "Minibar",
+    "description": "A simple, opinionated taskbar: favorite and running apps as icons in the top bar",
+    "shell-version": ["49", "50"],
+    "version": 1,
+    "version-name": "1",
+    "settings-schema": "org.gnome.shell.extensions.minibar",
+    "url": "https://github.com/essembeh/minibar"
+}

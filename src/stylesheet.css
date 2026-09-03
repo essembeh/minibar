@@ -1,0 +1,52 @@
+/* Bar size 'large'. Native panel height is ~34px with 22px icons;
+   keep the icon/bar ratio. */
+#panel.minibar-panel-large {
+    height: 40px;
+}
+
+.taskbar-app-button {
+    padding: 0 4px;
+    border-radius: 8px;
+}
+
+.taskbar-app-button-focused {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.taskbar-spacing-small {
+    spacing: 0px;
+}
+
+.taskbar-spacing-small .taskbar-app-button {
+    padding: 0 2px;
+}
+
+.taskbar-spacing-normal {
+    spacing: 2px;
+}
+
+.taskbar-spacing-large {
+    spacing: 6px;
+}
+
+.taskbar-spacing-large .taskbar-app-button {
+    padding: 0 6px;
+}
+.taskbar-window-preview {
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.taskbar-window-preview:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.taskbar-notification-badge {
+    background-color: #e01b24;
+    color: white;
+    font-weight: bold;
+    border-radius: 8px;
+    min-width: 9px;
+    padding: 0 3px;
+    text-align: center;
+}
