@@ -13,6 +13,7 @@ import {WindowPreviewMenu} from './windowPreview.js';
 const SIZE_PARAMS = {
     normal: {icon: 24, dashWidth: 5, dashHeight: 3, strip: 5, badgeFont: 11},
     large: {icon: 28, dashWidth: 7, dashHeight: 4, strip: 7, badgeFont: 13},
+    'extra-large': {icon: 32, dashWidth: 8, dashHeight: 5, strip: 8, badgeFont: 15},
 };
 const MAX_DASHES = 4;
 const DASH_SPACING = 2;

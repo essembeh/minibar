@@ -14,7 +14,11 @@ import {AppButton, getAppWindows} from './appButton.js';
 const SPACING_VALUES = ['small', 'normal', 'large'];
 // Style class (see stylesheet.css) rather than an inline style: the overview
 // resets Main.panel.style to null when it finishes hiding, which would drop it.
-const PANEL_LARGE_CLASS = 'minibar-panel-large';
+// Panel style class per 'size' setting ('normal' keeps the native panel height).
+const PANEL_SIZE_CLASSES = {
+    'large': 'minibar-panel-large',
+    'extra-large': 'minibar-panel-extra-large',
+};
 
 /**
  * Container holding one AppButton per app: favorites first (AppFavorites
@@ -108,11 +112,13 @@ class Taskbar extends St.BoxLayout {
     }
 
     _updatePanelHeight() {
-        const large = this._settings.get_string('size') === 'large';
-        if (large)
-            Main.panel.add_style_class_name(PANEL_LARGE_CLASS);
-        else
-            Main.panel.remove_style_class_name(PANEL_LARGE_CLASS);
+        const wanted = PANEL_SIZE_CLASSES[this._settings.get_string('size')];
+        for (const cls of Object.values(PANEL_SIZE_CLASSES)) {
+            if (cls === wanted)
+                Main.panel.add_style_class_name(cls);
+            else
+                Main.panel.remove_style_class_name(cls);
+        }
     }
 
     _rebuildAll() {
@@ -246,7 +252,8 @@ class Taskbar extends St.BoxLayout {
         this._destroyed = true;
         this._buttons.clear();
         this._workspaceSwitcherPopup?.destroy();
-        Main.panel.remove_style_class_name(PANEL_LARGE_CLASS);
+        Object.values(PANEL_SIZE_CLASSES).forEach(cls =>
+            Main.panel.remove_style_class_name(cls));
 
         // Restore the native panel: top edge, clock in the center box.
         const monitor = Main.layoutManager.primaryMonitor;

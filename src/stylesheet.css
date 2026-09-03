@@ -1,7 +1,11 @@
-/* Bar size 'large'. Native panel height is ~34px with 22px icons;
+/* Bar sizes above 'normal'. Native panel height is ~34px with 22px icons;
    keep the icon/bar ratio. */
 #panel.minibar-panel-large {
     height: 40px;
+}
+
+#panel.minibar-panel-extra-large {
+    height: 46px;
 }
 
 .taskbar-app-button {

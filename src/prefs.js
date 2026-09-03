@@ -30,7 +30,7 @@ export default class TaskbarPrefs extends ExtensionPreferences {
         addComboRow('bar-position', 'Bar position', 'Screen edge for the top bar',
             ['top', 'bottom'], ['Top', 'Bottom']);
         addComboRow('size', 'Bar size', 'Top bar and icon size',
-            ['normal', 'large'], ['Normal', 'Large']);
+            ['normal', 'large', 'extra-large'], ['Normal', 'Large', 'Extra Large']);
         addComboRow('spacing', 'Icon spacing', 'Distance between icons',
             ['small', 'normal', 'large'], ['Small', 'Normal', 'Large']);
         addComboRow('clock-position', 'Clock position', 'Where the clock is shown',

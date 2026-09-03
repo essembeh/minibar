@@ -5,6 +5,7 @@
       <choices>
         <choice value="normal"/>
         <choice value="large"/>
+        <choice value="extra-large"/>
       </choices>
       <default>'normal'</default>
       <summary>Bar size</summary>

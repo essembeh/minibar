@@ -68,7 +68,7 @@ Rules:
   dedicated strip below the icon (never overlapping it), and shrink to always all fit
   in the button width, centered vertically in the strip (never glued to the bar edge).
   Their metrics scale with the bar size setting (normal: 5×3px in a 5px strip; large:
-  7×4px in a 7px strip).
+  7×4px in a 7px strip; extra-large: 8×5px in an 8px strip).
 - Dash cap: **4 max** (like aztaskbar); beyond 4 windows, 4 dashes.
 - The **focused app's button** also gets a subtle rounded background highlight
   (white at 30% opacity), consistent with the panel hover effect.
@@ -118,7 +118,7 @@ with a destructive **Restore defaults** button row at the bottom (resets every k
 
 | Key                  | Type                           | Default  | Effect                                                                                                                                                             |
 | -------------------- | ------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `size`               | `normal` \| `large`            | `normal` | **Bar size**: top bar height (native ~34px / 40px) AND icon (24px / 28px), kept proportional. Large adds the `minibar-panel-large` style class on `Main.panel` (not an inline style: the overview clears `Main.panel.style`), removed on disable     |
+| `size`               | `normal` \| `large` \| `extra-large` | `normal` | **Bar size**: top bar height (native ~34px / 40px / 46px) AND icon (24px / 28px / 32px), kept proportional. Non-normal sizes add the matching `minibar-panel-large` / `minibar-panel-extra-large` style class on `Main.panel` (not an inline style: the overview clears `Main.panel.style`), removed on disable     |
 | `spacing`            | `small` \| `normal` \| `large` | `normal` | **Icon spacing**: drives box spacing AND button padding (CSS classes); resulting gap between icons ≈ 4px / 10px / 18px. Small keeps icons close but never touching |
 | `bar-position`       | `top` \| `bottom`              | `top`    | Anchor the whole GNOME panel to the top or bottom screen edge (primary monitor)                                                                                    |
 | `clock-position`     | `center` \| `right`            | `center` | Clock (dateMenu) in the center box or at the left end of the right box; restored to center on disable                                                              |

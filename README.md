@@ -78,15 +78,15 @@ the bar feels, and hardcodes the rest.
 
 ![Minibar settings](docs/images/settings.png)
 
-| Setting                    | Values                                           | Default |
-| -------------------------- | ------------------------------------------------ | ------- |
-| Bar position               | top · bottom                                     | top     |
-| Bar size                   | normal · large (bar and icons stay proportional) | normal  |
-| Icon spacing               | small · normal · large                           | normal  |
-| Clock position             | center · right                                   | center  |
-| Workspace isolation        | on · off                                         | off     |
-| Notification badges        | on · off                                         | on      |
-| Scroll to change workspace | on · off                                         | on      |
+| Setting                    | Values                                                         | Default |
+| -------------------------- | -------------------------------------------------------------- | ------- |
+| Bar position               | top · bottom                                                   | top     |
+| Bar size                   | normal · large · extra large (bar and icons stay proportional) | normal  |
+| Icon spacing               | small · normal · large                                         | normal  |
+| Clock position             | center · right                                                 | center  |
+| Workspace isolation        | on · off                                                       | off     |
+| Notification badges        | on · off                                                       | on      |
+| Scroll to change workspace | on · off                                                       | on      |
 
 ## Hacking
 
