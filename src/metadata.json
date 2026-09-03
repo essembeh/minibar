@@ -3,8 +3,8 @@
     "name": "Minibar",
     "description": "A simple, opinionated taskbar: favorite and running apps as icons in the top bar",
     "shell-version": ["49", "50"],
-    "version": 1,
-    "version-name": "1",
+    "version": 2,
+    "version-name": "2",
     "settings-schema": "org.gnome.shell.extensions.minibar",
     "url": "https://github.com/essembeh/minibar"
 }
