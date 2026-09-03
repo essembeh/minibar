@@ -33,6 +33,34 @@ export default class TaskbarPrefs extends ExtensionPreferences {
             ['normal', 'large', 'extra-large'], ['Normal', 'Large', 'Extra Large']);
         addComboRow('spacing', 'Icon spacing', 'Distance between icons',
             ['small', 'normal', 'large'], ['Small', 'Normal', 'Large']);
+
+        const opacityAdjustment = new Gtk.Adjustment({
+            lower: 0, upper: 100, step_increment: 10, page_increment: 10,
+        });
+        settings.bind('opacity', opacityAdjustment, 'value', Gio.SettingsBindFlags.DEFAULT);
+        // Gtk.Scale doesn't snap while dragging; round to the 10% steps the
+        // stylesheet actually defines (see taskbar.js PANEL_OPACITY_STEPS).
+        opacityAdjustment.connect('value-changed', () => {
+            const snapped = Math.round(opacityAdjustment.value / 10) * 10;
+            if (opacityAdjustment.value !== snapped)
+                opacityAdjustment.value = snapped;
+        });
+        const opacityScale = new Gtk.Scale({
+            orientation: Gtk.Orientation.HORIZONTAL,
+            adjustment: opacityAdjustment,
+            digits: 0,
+            draw_value: true,
+            hexpand: true,
+            width_request: 160,
+        });
+        opacityScale.set_format_value_func((_scale, value) => `${value}%`);
+        const opacityRow = new Adw.ActionRow({
+            title: 'Bar opacity',
+            subtitle: '100% keeps the current shell theme',
+        });
+        opacityRow.add_suffix(opacityScale);
+        group.add(opacityRow);
+
         addComboRow('clock-position', 'Clock position', 'Where the clock is shown',
             ['center', 'right'], ['Center', 'Right']);
 

@@ -21,6 +21,12 @@
       <summary>Icon spacing</summary>
       <description>Distance between the taskbar icons.</description>
     </key>
+    <key name="opacity" type="i">
+      <range min="0" max="100"/>
+      <default>100</default>
+      <summary>Bar opacity</summary>
+      <description>Panel background opacity in 10% steps; 100 keeps the active shell theme, lower values fade toward transparent black.</description>
+    </key>
     <key name="bar-position" type="s">
       <choices>
         <choice value="top"/>

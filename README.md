@@ -10,13 +10,12 @@ the left of the top bar — nothing more.
 
 ## What it does
 
-- 🎯 **Icons only** (no labels): pinned favorites first (always visible), then running
-  apps, one icon per app.
-- 💄 **Dashes** under each icon: one per open window (max 4), accent color when focused.
-- 🔔 **Notification badge** on the icon corner.
-- 🖱️ **Click**: launch / focus / cycle windows · **middle click**: new window ·
-  **right click**: native app menu · **hover**: window thumbnails.
-- 🖥️ **Scroll on the bar**: switch workspace (no wrap-around).
+- 🎯 **App icons** in the top bar: pinned favorites first and always visible, then
+  other running apps, one icon per app.
+- 💄 **Dashes** under each icon: one per open window, accent color when focused.
+- ✨ **A few extras**: notification badges on icons, scroll on the bar to switch
+  workspace, adjustable bar opacity, size and position, clock position... maybe
+  more, but not too much.
 - 🧩 **Stock GNOME everywhere else**: native app menus, native workspace OSD, native
   panel — Minibar adds a taskbar, it does not reskin the shell.
 
@@ -82,6 +81,7 @@ the bar feels, and hardcodes the rest.
 | -------------------------- | -------------------------------------------------------------- | ------- |
 | Bar position               | top · bottom                                                   | top     |
 | Bar size                   | normal · large · extra large (bar and icons stay proportional) | normal  |
+| Bar opacity                | 0 · 10 · ... · 100, 10% steps                                  | 100     |
 | Icon spacing               | small · normal · large                                         | normal  |
 | Clock position             | center · right                                                 | center  |
 | Workspace isolation        | on · off                                                       | off     |

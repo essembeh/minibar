@@ -8,6 +8,22 @@
     height: 46px;
 }
 
+/* Bar opacity below 100% overrides the shell theme's panel background with
+   flat black at the matching alpha (dark-only assumption, see spec §3.1).
+   Discrete 10% steps rather than an inline style: see the opacity handling
+   in taskbar.js for why (overview resets Main.panel.style to null). 100% is
+   the default and has no class here, so it keeps the native theme exactly. */
+#panel.minibar-opacity-0 { background-color: rgba(0, 0, 0, 0); }
+#panel.minibar-opacity-10 { background-color: rgba(0, 0, 0, 0.1); }
+#panel.minibar-opacity-20 { background-color: rgba(0, 0, 0, 0.2); }
+#panel.minibar-opacity-30 { background-color: rgba(0, 0, 0, 0.3); }
+#panel.minibar-opacity-40 { background-color: rgba(0, 0, 0, 0.4); }
+#panel.minibar-opacity-50 { background-color: rgba(0, 0, 0, 0.5); }
+#panel.minibar-opacity-60 { background-color: rgba(0, 0, 0, 0.6); }
+#panel.minibar-opacity-70 { background-color: rgba(0, 0, 0, 0.7); }
+#panel.minibar-opacity-80 { background-color: rgba(0, 0, 0, 0.8); }
+#panel.minibar-opacity-90 { background-color: rgba(0, 0, 0, 0.9); }
+
 .taskbar-app-button {
     padding: 0 4px;
     border-radius: 8px;

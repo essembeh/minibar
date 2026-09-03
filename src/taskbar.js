@@ -19,6 +19,11 @@ const PANEL_SIZE_CLASSES = {
     'large': 'minibar-panel-large',
     'extra-large': 'minibar-panel-extra-large',
 };
+// Same style-class reasoning for 'opacity': 100 (default) adds no class and
+// keeps the native theme background; below that, snap to the nearest 10%
+// step (see stylesheet.css) so there is no continuous rgba() written to
+// Main.panel.style.
+const PANEL_OPACITY_STEPS = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90];
 
 /**
  * Container holding one AppButton per app: favorites first (AppFavorites
@@ -60,6 +65,7 @@ class Taskbar extends St.BoxLayout {
             'changed::notification-badges', () => this._updateButtons(),
             'changed::bar-position', () => this._updateBarPosition(),
             'changed::clock-position', () => this._updateClockPosition(),
+            'changed::opacity', () => this._updatePanelOpacity(),
             this);
         // Re-anchor the panel after the layout manager resets it to the top.
         Main.layoutManager.connectObject(
@@ -68,6 +74,7 @@ class Taskbar extends St.BoxLayout {
             'notify::height', () => this._updateBarPosition(), this);
         this._updateSpacing();
         this._updatePanelHeight();
+        this._updatePanelOpacity();
         this._updateBarPosition();
         this._updateClockPosition();
         this.connect('destroy', () => this._onDestroy());
@@ -115,6 +122,18 @@ class Taskbar extends St.BoxLayout {
         const wanted = PANEL_SIZE_CLASSES[this._settings.get_string('size')];
         for (const cls of Object.values(PANEL_SIZE_CLASSES)) {
             if (cls === wanted)
+                Main.panel.add_style_class_name(cls);
+            else
+                Main.panel.remove_style_class_name(cls);
+        }
+    }
+
+    _updatePanelOpacity() {
+        const snapped = Math.min(100, Math.max(0,
+            Math.round(this._settings.get_int('opacity') / 10) * 10));
+        for (const step of PANEL_OPACITY_STEPS) {
+            const cls = `minibar-opacity-${step}`;
+            if (step === snapped)
                 Main.panel.add_style_class_name(cls);
             else
                 Main.panel.remove_style_class_name(cls);
@@ -254,6 +273,8 @@ class Taskbar extends St.BoxLayout {
         this._workspaceSwitcherPopup?.destroy();
         Object.values(PANEL_SIZE_CLASSES).forEach(cls =>
             Main.panel.remove_style_class_name(cls));
+        for (const step of PANEL_OPACITY_STEPS)
+            Main.panel.remove_style_class_name(`minibar-opacity-${step}`);
 
         // Restore the native panel: top edge, clock in the center box.
         const monitor = Main.layoutManager.primaryMonitor;
