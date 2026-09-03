@@ -6,22 +6,19 @@
 A minimal taskbar extension for GNOME Shell: favorite and running apps as icons on
 the left of the top bar — nothing more.
 
-> ⚠️ **This extension implements *my* preferences.** It is intentionally light on
-> configuration: I felt drowned by the settings pages of the (excellent) alternatives
-> that inspired it — [App Icons Taskbar](https://extensions.gnome.org/extension/4944/app-icons-taskbar/)
-> and [Tasks in Panel](https://extensions.gnome.org/extension/8642/tasks-in-panel/).
-> If you want knobs for everything, use them; if you share my taste, enjoy.
+![Minibar in action](docs/images/demo.png)
 
 ## What it does
 
-- **Icons only** (no labels): pinned favorites first (always visible), then running
+- 🎯 **Icons only** (no labels): pinned favorites first (always visible), then running
   apps, one icon per app.
-- **One dash per open window** below each icon (max 4) — accent color for the focused
-  app, white for the others.
-- **Notification badge** (iOS-style counter) on the icon corner.
-- **Click**: launch / focus / cycle windows (never minimizes) · **middle click**: new window ·
+- 💄 **Dashes** under each icon: one per open window (max 4), accent color when focused.
+- 🔔 **Notification badge** on the icon corner.
+- 🖱️ **Click**: launch / focus / cycle windows · **middle click**: new window ·
   **right click**: native app menu · **hover**: window thumbnails.
-- **Scroll on the bar**: switch workspace (no wrap-around), with the native OSD.
+- 🖥️ **Scroll on the bar**: switch workspace (no wrap-around).
+- 🧩 **Stock GNOME everywhere else**: native app menus, native workspace OSD, native
+  panel — Minibar adds a taskbar, it does not reskin the shell.
 
 ## What it deliberately does NOT do
 
@@ -30,28 +27,19 @@ widgets, per-feature timing knobs… See the [spec](docs/specs/taskbar.md) — t
 principle at the top is the project's constitution, and the maintenance risk map in
 §5 explains why small code beats features here.
 
-## Settings (all six of them)
-
-| Setting | Values |
-| --- | --- |
-| Bar position | top · bottom |
-| Bar size | normal · large (bar and icons stay proportional) |
-| Icon spacing | small · normal · large |
-| Clock position | center · right |
-| Workspace isolation | on · off |
-| Scroll to change workspace | on · off |
-
-## Compatibility
-
-GNOME Shell **49 and 50** — developed and tested on 50 (whatever current NixOS
-stable ships); 49 is supported on a best-effort basis (same APIs, untested).
-No compatibility layers for older versions: the required `Clutter.ClickGesture`
-API only exists since 49, and the extension moves forward with GNOME rather than
-accumulating shims.
-
 ## Install
 
-Minibar is not on extensions.gnome.org — install it from a release zip or from source.
+Minibar is not on extensions.gnome.org (yet) — install it from a release zip or from source.
+
+### One-liner (latest release)
+
+```bash
+curl -L -o /tmp/minibar.zip \
+  "https://github.com/essembeh/minibar/releases/latest/download/minibar@essembeh.org.shell-extension.zip" \
+  && gnome-extensions install --force /tmp/minibar.zip
+# log out / log in, then:
+gnome-extensions enable minibar@essembeh.org
+```
 
 ### From a release zip
 
@@ -74,6 +62,32 @@ ln -s "$PWD/minibar/src" ~/.local/share/gnome-shell/extensions/minibar@essembeh.
 gnome-extensions enable minibar@essembeh.org
 ```
 
+## Compatibility
+
+GNOME Shell **49 and 50** — developed and tested on 50 (whatever current NixOS
+stable ships); 49 is supported on a best-effort basis (same APIs, untested).
+No compatibility layers for older versions: the required `Clutter.ClickGesture`
+API only exists since 49, and the extension moves forward with GNOME rather than
+accumulating shims.
+
+## Settings
+
+Only the strict minimum is configurable — that's the whole point: every knob is a
+behavior to maintain, so the extension ships with the few that genuinely change how
+the bar feels, and hardcodes the rest.
+
+![Minibar settings](docs/images/settings.png)
+
+| Setting                    | Values                                           | Default |
+| -------------------------- | ------------------------------------------------ | ------- |
+| Bar position               | top · bottom                                     | top     |
+| Bar size                   | normal · large (bar and icons stay proportional) | normal  |
+| Icon spacing               | small · normal · large                           | normal  |
+| Clock position             | center · right                                   | center  |
+| Workspace isolation        | on · off                                         | off     |
+| Notification badges        | on · off                                         | on      |
+| Scroll to change workspace | on · off                                         | on      |
+
 ## Hacking
 
 `./tests/nested.sh` starts a nested GNOME Shell (devkit) with only this extension
@@ -89,6 +103,14 @@ I am open to feature suggestions and PRs, as long as:
 1. **I find the feature useful** — this is an opinionated extension, not a toolbox;
 2. **it carries a low maintenance risk** across GNOME versions (see the risk map in
    the spec: anything fighting shell internals is a hard sell).
+
+## Author's note
+
+> ⚠️ **This extension implements *my* preferences.** It is intentionally light on
+> configuration: I felt drowned by the settings pages of the (excellent) alternatives
+> that inspired it — [App Icons Taskbar](https://extensions.gnome.org/extension/4944/app-icons-taskbar/)
+> and [Tasks in Panel](https://extensions.gnome.org/extension/8642/tasks-in-panel/).
+> If you want knobs for everything, use them; if you share my taste, enjoy.
 
 ## License
 

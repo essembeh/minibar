@@ -9,6 +9,28 @@ reflected there first (KISS principle and the maintenance risk map live at the t
 the spec). Repo content (code, docs, commits) is in English; conversation with Seb is
 in French.
 
+## Markdown formatting
+
+All `.md` files (README, specs, this file):
+
+- **Tables are padded so the pipes line up** — pad every cell with spaces to the
+  widest cell of its column, and make the separator row match that width:
+
+  ```markdown
+  | Setting             | Values       | Default |
+  | ------------------- | ------------ | ------- |
+  | Bar position        | top · bottom | top     |
+  | Workspace isolation | on · off     | off     |
+  ```
+
+  Count **characters, not bytes** (`·`, `—`, emojis are multi-byte). Check with
+  `grep '^|' file.md | awk '{ print length($0) }' | sort -u` — a single value means
+  the table is aligned.
+- Wrap **prose** at ~88 columns (the existing files cap at 87-88). Tables, fenced
+  code and long URLs are exempt — never break those to fit. Never reflow a paragraph
+  that is not otherwise being edited.
+- Fenced code blocks always carry a language tag (`bash`, `js`, `markdown`, `xml`).
+
 ## Feature requests: be critical (KISS guard)
 
 When Seb asks for a new feature, do NOT just implement it:
@@ -59,7 +81,9 @@ When Seb asks for a new feature, do NOT just implement it:
   script keeps the sender alive (Ctrl+C ends the test). A banner being displayed sets
   `acknowledged` immediately.
 - The install symlink points to `src/`:
-  `~/.local/share/gnome-shell/extensions/minibar@essembeh.org` → `.../my-gnome-extension/src`.
+  `~/.local/share/gnome-shell/extensions/minibar@essembeh.org` → `.../minibar/src`.
+  It must point at `src/`, not at the repo root — otherwise the shell finds no
+  `metadata.json`/`schemas/` and the extension stays in `ERROR`.
 
 ## GNOME 49/50 API gotchas (learned the hard way)
 
