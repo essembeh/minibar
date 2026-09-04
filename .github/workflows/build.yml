@@ -2,7 +2,7 @@ name: build
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
     tags: ['v*']
   pull_request:
 
@@ -10,15 +10,13 @@ env:
   UUID: minibar@essembeh.org
 
 jobs:
+  # Every push and PR is checked; only a v* tag publishes the archive.
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libglib2.0-dev-bin zip
 
       - name: Syntax check
         run: |
@@ -27,32 +25,58 @@ jobs:
             echo "$f OK"
           done
 
-      - name: Build extension zip
+      - name: Build the archive
         run: |
-          glib-compile-schemas src/schemas/
           cd src
-          zip -r "../$UUID.shell-extension.zip" \
-            extension.js taskbar.js appButton.js notifications.js \
-            windowPreview.js prefs.js metadata.json stylesheet.css schemas/
+          # gschemas.compiled is a build artifact: EGO compiles the schema itself
+          # (shexli EGO-P-006) and `gnome-extensions install` does it too.
+          zip -qr "../$UUID.shell-extension.zip" *.js *.css metadata.json schemas/ \
+            -x 'schemas/gschemas.compiled'
+
+      - name: Check the metadata
+        run: |
+          unzip -q "$UUID.shell-extension.zip" -d dist
+          # metadata.json must sit at the root, or the uploader rejects the zip
+          test -f dist/metadata.json
+          test "$(jq -r .uuid dist/metadata.json)" = "$UUID"
+          # EGO stores the version as an integer and orders updates with it
+          jq -e '.version | type == "number" and . == floor' dist/metadata.json > /dev/null
+          jq -e '(.["shell-version"] | length) > 0
+                 and all(.["shell-version"][]; test("^[0-9]+$"))' dist/metadata.json > /dev/null
+          # name/description/url are what the extension page displays
+          jq -e '.name and .description and .url' dist/metadata.json > /dev/null
+          schema="$(jq -r '.["settings-schema"]' dist/metadata.json)"
+          grep -q "id=\"$schema\"" "dist/schemas/$schema.gschema.xml"
+
+      - name: Check the archive contents
+        run: |
+          junk="$(find dist \( -name gschemas.compiled -o -name '.DS_Store' -o -name '*~' \))"
+          test -z "$junk" || { echo "unnecessary files shipped: $junk"; exit 1; }
+          # a source file left out of the zip only fails at enable() time
+          diff <(cd src && find . -type f ! -name gschemas.compiled | sort) \
+               <(cd dist && find . -type f | sort)
+          missing="$(grep -ohE "from '\./[^']+'" dist/*.js | sed -E "s|from '\./||; s|'$||" \
+                     | sort -u | while read -r dep; do test -f "dist/$dep" || echo "$dep"; done)"
+          test -z "$missing" || { echo "unresolved imports: $missing"; exit 1; }
+          # EGO refuses archives over 5 MiB
+          test "$(stat -c %s "$UUID.shell-extension.zip")" -le $((5 * 1024 * 1024))
+
+      - uses: astral-sh/setup-uv@v6
+
+      # Static analyzer used by the extensions.gnome.org reviewers, unpinned on
+      # purpose: the review runs whatever is current.
+      - name: Review lint (shexli)
+        run: uvx shexli "$PWD/$UUID.shell-extension.zip"
 
       - uses: actions/upload-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           name: minibar-shell-extension
           path: ${{ env.UUID }}.shell-extension.zip
           if-no-files-found: error
 
-  release:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: minibar-shell-extension
-
       - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           files: ${{ env.UUID }}.shell-extension.zip
           generate_release_notes: true

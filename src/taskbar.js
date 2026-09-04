@@ -39,8 +39,12 @@ class Taskbar extends St.BoxLayout {
         // appId → AppButton, kept in display order for non-favorite stability.
         this._buttons = new Map();
         this._menuManager = new PopupMenu.PopupMenuManager(this);
-        this._redisplayQueued = false;
-        this._destroyed = false;
+        this._redisplayId = 0;
+        // Where the shell put the clock, to restore it exactly on destroy.
+        const clock = Main.panel.statusArea.dateMenu.container;
+        this._clockParent = clock.get_parent();
+        this._clockIndex = this._clockParent
+            ? this._clockParent.get_children().indexOf(clock) : 0;
 
         AppFavorites.getAppFavorites().connectObject(
             'changed', () => this._queueRedisplay(), this);
@@ -111,11 +115,20 @@ class Taskbar extends St.BoxLayout {
 
     _updateClockPosition() {
         const container = Main.panel.statusArea.dateMenu.container;
+        const target = this._settings.get_string('clock-position') === 'right'
+            ? Main.panel._rightBox : Main.panel._centerBox;
+        // Nothing to do when the clock already sits in the right box, so the
+        // default setting never moves it at all.
+        if (container.get_parent() === target)
+            return;
+        this._moveClockTo(target,
+            target === this._clockParent ? this._clockIndex : 0);
+    }
+
+    _moveClockTo(box, index) {
+        const container = Main.panel.statusArea.dateMenu.container;
         container.get_parent()?.remove_child(container);
-        if (this._settings.get_string('clock-position') === 'right')
-            Main.panel._rightBox.insert_child_at_index(container, 0);
-        else
-            Main.panel._centerBox.insert_child_at_index(container, 0);
+        box.insert_child_at_index(container, Math.min(index, box.get_n_children()));
     }
 
     _updatePanelHeight() {
@@ -204,13 +217,13 @@ class Taskbar extends St.BoxLayout {
     }
 
     _queueRedisplay() {
-        if (this._redisplayQueued)
+        if (this._redisplayId)
             return;
-        this._redisplayQueued = true;
-        GLib.idle_add_once(GLib.PRIORITY_DEFAULT_IDLE, () => {
-            this._redisplayQueued = false;
-            if (!this._destroyed)
-                this._redisplay();
+        // Tracked and removed in _onDestroy(): a pending redisplay must never
+        // outlive disable().
+        this._redisplayId = GLib.idle_add_once(GLib.PRIORITY_DEFAULT_IDLE, () => {
+            this._redisplayId = 0;
+            this._redisplay();
         });
     }
 
@@ -268,7 +281,10 @@ class Taskbar extends St.BoxLayout {
     }
 
     _onDestroy() {
-        this._destroyed = true;
+        if (this._redisplayId) {
+            GLib.Source.remove(this._redisplayId);
+            this._redisplayId = 0;
+        }
         this._buttons.clear();
         this._workspaceSwitcherPopup?.destroy();
         Object.values(PANEL_SIZE_CLASSES).forEach(cls =>
@@ -276,12 +292,12 @@ class Taskbar extends St.BoxLayout {
         for (const step of PANEL_OPACITY_STEPS)
             Main.panel.remove_style_class_name(`minibar-opacity-${step}`);
 
-        // Restore the native panel: top edge, clock in the center box.
+        // Restore the native panel: top edge, clock back where the shell had it.
         const monitor = Main.layoutManager.primaryMonitor;
         if (monitor)
             Main.layoutManager.panelBox.set_position(monitor.x, monitor.y);
         const container = Main.panel.statusArea.dateMenu.container;
-        container.get_parent()?.remove_child(container);
-        Main.panel._centerBox.insert_child_at_index(container, 0);
+        if (this._clockParent && container.get_parent() !== this._clockParent)
+            this._moveClockTo(this._clockParent, this._clockIndex);
     }
 });

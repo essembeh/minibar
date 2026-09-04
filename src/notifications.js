@@ -11,8 +11,8 @@ export class NotificationsMonitor extends EventEmitter {
     constructor() {
         super();
         this._counts = new Map();
-        // Signals connected on tray sources/notifications, re-created on each refresh.
-        this._trackedSignals = new Map();
+        // Sources/notifications we listen to, re-created on each refresh.
+        this._tracked = new Set();
 
         Main.messageTray.connectObject(
             'source-added', () => this._refresh(),
@@ -26,9 +26,18 @@ export class NotificationsMonitor extends EventEmitter {
         return this._counts.get(appId) ?? 0;
     }
 
+    // connectObject() over raw connect(): a refresh is triggered from the
+    // 'destroy' handler of a notification, and disconnecting a handler by id on
+    // an object that is going away throws. The signal tracker drops those
+    // connections on its own, and the Set keeps the wrappers alive until then.
+    _track(object, ...signals) {
+        object.connectObject(...signals, this);
+        this._tracked.add(object);
+    }
+
     _disconnectTracked() {
-        this._trackedSignals.forEach((object, id) => object.disconnect(id));
-        this._trackedSignals = new Map();
+        this._tracked.forEach(object => object.disconnectObject(this));
+        this._tracked.clear();
     }
 
     _refresh() {
@@ -36,9 +45,7 @@ export class NotificationsMonitor extends EventEmitter {
         this._disconnectTracked();
 
         for (const source of Main.messageTray.getSources()) {
-            this._trackedSignals.set(
-                source.connect('notification-added', () => this._refresh()),
-                source);
+            this._track(source, 'notification-added', () => this._refresh());
 
             for (const notification of source.notifications) {
                 const app = notification.source?.app ?? notification.source?._app;
@@ -49,13 +56,10 @@ export class NotificationsMonitor extends EventEmitter {
                 if (notification.resident) {
                     if (notification.acknowledged)
                         continue;
-                    this._trackedSignals.set(
-                        notification.connect('notify::acknowledged', () => this._refresh()),
-                        notification);
+                    this._track(notification,
+                        'notify::acknowledged', () => this._refresh());
                 }
-                this._trackedSignals.set(
-                    notification.connect('destroy', () => this._refresh()),
-                    notification);
+                this._track(notification, 'destroy', () => this._refresh());
 
                 this._counts.set(appId, (this._counts.get(appId) ?? 0) + 1);
             }

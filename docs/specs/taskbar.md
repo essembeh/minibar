@@ -116,16 +116,16 @@ GSettings schema `org.gnome.shell.extensions.minibar`, prefs window in libadwait
 with a destructive **Restore defaults** button row at the bottom (resets every key),
 (one page, one group, three rows):
 
-| Key                  | Type                           | Default  | Effect                                                                                                                                                             |
-| -------------------- | ------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `size`               | `normal` \| `large` \| `extra-large` | `normal` | **Bar size**: top bar height (native ~34px / 40px / 46px) AND icon (24px / 28px / 32px), kept proportional. Non-normal sizes add the matching `minibar-panel-large` / `minibar-panel-extra-large` style class on `Main.panel` (not an inline style: the overview clears `Main.panel.style`), removed on disable     |
-| `spacing`            | `small` \| `normal` \| `large` | `normal` | **Icon spacing**: drives box spacing AND button padding (CSS classes); resulting gap between icons ≈ 4px / 10px / 18px. Small keeps icons close but never touching |
-| `opacity`            | int `0`-`100`, 10% steps       | `100`    | **Bar opacity**: `100` keeps the native theme (no class); below, flat black via `minibar-opacity-N` classes in 10% steps, same not-inline-style pattern as `size`  |
-| `bar-position`       | `top` \| `bottom`              | `top`    | Anchor the whole GNOME panel to the top or bottom screen edge (primary monitor)                                                                                    |
-| `clock-position`     | `center` \| `right`            | `center` | Clock (dateMenu) in the center box or at the left end of the right box; restored to center on disable                                                              |
-| `isolate-workspaces` | bool                           | false    | Only show/count windows of the active workspace                                                                                                                    |
-| `notification-badges` | bool | true | Show the unread notification badge on icons (the MessageTray monitor stays connected either way — accepted trade-off for simplicity) |
-| `scroll-workspace`   | bool                           | true     | Scroll on the top bar switches workspace                                                                                                                           |
+| Key                   | Type                                 | Default  | Effect                                                                                                                                                                                                                                                                                                          |
+| --------------------- | ------------------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `size`                | `normal` \| `large` \| `extra-large` | `normal` | **Bar size**: top bar height (native ~34px / 40px / 46px) AND icon (24px / 28px / 32px), kept proportional. Non-normal sizes add the matching `minibar-panel-large` / `minibar-panel-extra-large` style class on `Main.panel` (not an inline style: the overview clears `Main.panel.style`), removed on disable |
+| `spacing`             | `small` \| `normal` \| `large`       | `normal` | **Icon spacing**: drives box spacing AND button padding (CSS classes); resulting gap between icons ≈ 4px / 10px / 18px. Small keeps icons close but never touching                                                                                                                                              |
+| `opacity`             | int `0`-`100`, 10% steps             | `100`    | **Bar opacity**: `100` keeps the native theme (no class); below, flat black via `minibar-opacity-N` classes in 10% steps, same not-inline-style pattern as `size`                                                                                                                                               |
+| `bar-position`        | `top` \| `bottom`                    | `top`    | Anchor the whole GNOME panel to the top or bottom screen edge (primary monitor)                                                                                                                                                                                                                                 |
+| `clock-position`      | `center` \| `right`                  | `center` | Clock (dateMenu) in the center box or at the left end of the right box; restored to its original box and index on disable                                                                                                                                                                                       |
+| `isolate-workspaces`  | bool                                 | false    | Only show/count windows of the active workspace                                                                                                                                                                                                                                                                 |
+| `notification-badges` | bool                                 | true     | Show the unread notification badge on icons (the MessageTray monitor stays connected either way — accepted trade-off for simplicity)                                                                                                                                                                            |
+| `scroll-workspace`    | bool                                 | true     | Scroll on the top bar switches workspace                                                                                                                                                                                                                                                                        |
 
 ## 3. Technical specification
 
@@ -152,7 +152,8 @@ src/                       # everything the shell loads (install symlink / zip t
   stylesheet.css
 tests/nested.sh            # dev helper: nested devkit session
 tests/notify-test.sh       # dev helper: notification badge test (run inside nested)
-.github/workflows/build.yml  # CI: check + zip + release on tag
+Justfile                   # task runner: check, pack, shexli, schemas, nested
+.github/workflows/build.yml  # CI: checks on every push, release on a v* tag
 docs/specs/taskbar.md      # this spec
 ```
 
@@ -172,7 +173,7 @@ docs/specs/taskbar.md      # this spec
 | Menu          | `AppMenu` (`resource:///org/gnome/shell/ui/appMenu.js`) + `PopupMenuManager`                                      |
 | Notifications | `Main.messageTray` (`source-added`/`source-removed`, `notification-added`, `notify::acknowledged`)                |
 | Signals       | `connectObject()` / `disconnectObject()` everywhere                                                               |
-| Timers        | `GLib.idle_add_once` for batched redisplays                                                                       |
+| Timers        | `GLib.idle_add_once` for batched redisplays; source id tracked, removed on destroy                                |
 
 ### 3.4 Reconciliation logic (core of the extension)
 
@@ -196,8 +197,11 @@ docs/specs/taskbar.md      # this spec
   (`dbus-run-session -- gnome-shell --devkit --wayland` with an isolated dconf profile;
   `--nested` was removed in GNOME 49) to test without re-login; otherwise logout/login.
 - Debug: `journalctl --user -f` (filter gnome-shell), Looking Glass (`lg`).
-- CI (GitHub Actions): syntax check + build of the `shell-extension.zip` on every
-  push/PR; a `v*` tag attaches the zip to a GitHub release.
+- Local barrier: `just check` — ESM syntax check, then shexli (the
+  extensions.gnome.org static analyzer) on the built zip.
+- CI (GitHub Actions): every push and PR runs the syntax check, builds the archive,
+  asserts its layout/metadata/completeness and runs shexli; the upload and the
+  GitHub release steps are gated on a `v*` tag, so a plain push publishes nothing.
 - Nix packaging: **later**, out of scope for v1.
 
 ## 5. Maintenance risk map
