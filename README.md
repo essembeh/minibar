@@ -21,10 +21,12 @@ the left of the top bar — nothing more.
 
 ## What it deliberately does NOT do
 
-Multi-monitor panels, intellihide, peek, preview grids, Unity badges, clock/weather
-widgets, per-feature timing knobs… See the [spec](docs/specs/taskbar.md) — the KISS
-principle at the top is the project's constitution, and the maintenance risk map in
-§5 explains why small code beats features here.
+GNOME's ergonomics are good as they are — the goal is to touch them as little as
+possible. Minibar adds a taskbar and gets out of the way: no multi-monitor panels,
+no intellihide, no peek, no preview grids, no Unity badges, no clock/weather
+widgets, no per-feature timing knobs. See the [spec](docs/specs/taskbar.md) — the
+KISS principle at the top is the project's constitution, and the maintenance risk
+map in §5 explains why small code beats features here.
 
 ## Install
 
@@ -57,14 +59,19 @@ gnome-extensions enable minibar@essembeh.org
 ```bash
 git clone https://github.com/essembeh/minibar
 ln -s "$PWD/minibar/src" ~/.local/share/gnome-shell/extensions/minibar@essembeh.org
+
 # log out / log in, then:
 gnome-extensions enable minibar@essembeh.org
+
+# or, to iterate without touching your session:
+./minibar/tests/nested.sh
 ```
 
 ## Compatibility
 
 GNOME Shell **49 and 50** — developed and tested on 50 (whatever current NixOS
 stable ships); 49 is supported on a best-effort basis (same APIs, untested).
+
 No compatibility layers for older versions: the required `Clutter.ClickGesture`
 API only exists since 49, and the extension moves forward with GNOME rather than
 accumulating shims.
@@ -88,13 +95,24 @@ the bar feels, and hardcodes the rest.
 | Notification badges        | on · off                                                       | on      |
 | Scroll to change workspace | on · off                                                       | on      |
 
-## Hacking
 
-`./tests/nested.sh` starts a nested GNOME Shell (devkit) with only this extension
-enabled and an isolated dconf — iterate without touching your session
-(`./tests/notify-test.sh` exercises the notification badge from inside it). The
-[spec](docs/specs/taskbar.md) is the source of truth: any behavior change must be
-reflected there first.
+## Author's note
+
+- This extension implements *my* preferences.
+- It is a small, consistent set of features GNOME lacks — just enough to make the
+  vanilla shell nicer to use, the way I like it.
+- It is deliberately light: some genuinely interesting features are missing simply
+  because they would take a lot of code that is hard to keep working across GNOME
+  versions.
+- If you want knobs for everything, the alternatives below do far more.
+
+Minibar owes a lot to three excellent extensions, which I used and read before
+writing my own — they do much more than Minibar, and are the right pick if you want
+a full-featured taskbar or dock:
+
+- [App Icons Taskbar](https://extensions.gnome.org/extension/4944/app-icons-taskbar/)
+- [Tasks in Panel](https://extensions.gnome.org/extension/8642/tasks-in-panel/)
+- [Dash to Dock](https://extensions.gnome.org/extension/307/dash-to-dock/)
 
 ## Suggestions welcome, with two filters
 
@@ -103,15 +121,3 @@ I am open to feature suggestions and PRs, as long as:
 1. **I find the feature useful** — this is an opinionated extension, not a toolbox;
 2. **it carries a low maintenance risk** across GNOME versions (see the risk map in
    the spec: anything fighting shell internals is a hard sell).
-
-## Author's note
-
-> ⚠️ **This extension implements *my* preferences.** It is intentionally light on
-> configuration: I felt drowned by the settings pages of the (excellent) alternatives
-> that inspired it — [App Icons Taskbar](https://extensions.gnome.org/extension/4944/app-icons-taskbar/)
-> and [Tasks in Panel](https://extensions.gnome.org/extension/8642/tasks-in-panel/).
-> If you want knobs for everything, use them; if you share my taste, enjoy.
-
-## License
-
-GPL-3.0-or-later
