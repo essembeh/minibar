@@ -19,7 +19,7 @@ const MAX_DASHES = 4;
 const DASH_SPACING = 2;
 const PREVIEW_SHOW_DELAY_MS = 600;
 const PREVIEW_HIDE_DELAY_MS = 300;
-// Fallback when global.stage.get_accent_color() is unavailable (GNOME default blue).
+// Fallback when StThemeContext.get_accent_color() is unavailable (GNOME default blue).
 const FALLBACK_ACCENT = {red: 53, green: 132, blue: 228, alpha: 255};
 
 /** App windows shown on the taskbar: skip-taskbar excluded, optionally
@@ -96,6 +96,9 @@ class AppButton extends St.Widget {
         this.add_action(clickGesture);
 
         this.app.connectObject('windows-changed', () => this.update(), this);
+        // Repaint the dashes when the system accent color changes.
+        St.Settings.get().connectObject(
+            'notify::accent-color', () => this._indicator.queue_repaint(), this);
         this.connect('notify::hover', () => this._onHoverChanged());
         this.connect('destroy', () => this._onDestroy());
 
@@ -263,10 +266,11 @@ class AppButton extends St.Widget {
 
         const cr = area.get_context();
         const [areaWidth, areaHeight] = area.get_surface_size();
-        const scale = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+        const themeContext = St.ThemeContext.get_for_stage(global.stage);
+        const scale = themeContext.scale_factor;
 
         if (this._isFocused) {
-            const [accent] = global.stage.get_accent_color?.() ?? [FALLBACK_ACCENT];
+            const [accent] = themeContext.get_accent_color?.() ?? [FALLBACK_ACCENT];
             cr.setSourceRGBA(accent.red / 255, accent.green / 255,
                 accent.blue / 255, accent.alpha / 255);
         } else {

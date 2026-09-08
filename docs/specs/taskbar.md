@@ -184,9 +184,20 @@ docs/specs/taskbar.md      # this spec
 
 ### 3.5 Accent color
 
-- `global.stage.get_accent_color()` (St API, GNOME 47+) returns the accent color
-  directly; hardcoded fallback to GNOME default blue if unavailable. The indicator is
-  repainted on every focus change, which also picks up accent changes.
+- `St.ThemeContext.get_for_stage(global.stage).get_accent_color()` returns
+  `[accent, accentFg]`, two `Cogl.Color`; `[0]` is the accent, `[1]` its foreground.
+  Hardcoded fallback to GNOME default blue if unavailable. Three traps, all verified
+  at runtime in the nested:
+  - It is *not* a method on `global.stage` (silently `undefined` there, which the
+    `?.` swallows — the dashes then stay stuck on the fallback blue).
+  - The sibling `St.Settings.get().get_accent_color()` (and the `accent-color`
+    property) returns the `StSystemAccentColor` **enum** — a plain number, `0` for
+    blue — not a color. Only `StThemeContext` gives RGBA.
+  - `Cogl.Color` is a boxed instance with no own JS keys: read `.red`/`.green`/
+    `.blue`/`.alpha`; `JSON.stringify()` on it yields `{}`.
+- The indicator is repainted on every focus change, and on
+  `St.Settings` `notify::accent-color` so a live accent change is picked up without
+  refocusing a window.
 
 ## 4. Dev workflow
 

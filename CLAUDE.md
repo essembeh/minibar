@@ -80,10 +80,19 @@ When Seb asks for a new feature, do NOT just implement it:
   notification daemon destroys a notification when its D-Bus sender exits, so the
   script keeps the sender alive (Ctrl+C ends the test). A banner being displayed sets
   `acknowledged` immediately.
-- The install symlink points to `src/`:
-  `~/.local/share/gnome-shell/extensions/minibar@essembeh.org` → `.../minibar/src`.
-  It must point at `src/`, not at the repo root — otherwise the shell finds no
-  `metadata.json`/`schemas/` and the extension stays in `ERROR`.
+- `tests/nested.sh` also writes a `user-dirs.dirs` into the throwaway config, so
+  screenshots taken in the nested go to a temp dir instead of creating a
+  "Captures d'écran" folder in the host home (with no such file, GNOME falls back to
+  `$HOME`); `user-dirs.conf` disables `xdg-user-dirs-update` so it cannot rewrite it.
+- **The nested is the only thing running the working tree.** `tests/nested.sh` sets a
+  throwaway `XDG_DATA_HOME` holding a symlink to `src/`, so it always loads the repo.
+  Seb's real session runs the **release packaged by NixOS**
+  (`/run/current-system/sw/share/gnome-shell/extensions/minibar@essembeh.org`) and is
+  NOT affected by edits in `src/` — there is no dev symlink in `~/.local/share`.
+  Never conclude anything from a nested run without checking the change is actually
+  loaded: a stale release silently serves the old code and any visual test is blind.
+- A symlink to the extension must point at `src/`, not at the repo root — otherwise
+  the shell finds no `metadata.json`/`schemas/` and the extension stays in `ERROR`.
 
 ## GNOME 49/50 API gotchas (learned the hard way)
 
