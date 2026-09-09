@@ -14,8 +14,8 @@ the left of the top bar — nothing more.
   other running apps, one icon per app.
 - 💄 **Dashes** under each icon: one per open window, accent color when focused.
 - ✨ **A few extras**: notification badges on icons, scroll on the bar to switch
-  workspace, adjustable bar opacity, size and position, clock position... maybe
-  more, but not too much.
+  workspace, adjustable bar opacity, size and position, clock position, a battery
+  charge limit toggle in the quick settings... maybe more, but not too much.
 - 🧩 **Stock GNOME everywhere else**: native app menus, native workspace OSD, native
   panel — Minibar adds a taskbar, it does not reskin the shell.
 
@@ -88,12 +88,13 @@ the bar feels, and hardcodes the rest.
 | -------------------------- | -------------------------------------------------------------- | ------- |
 | Bar position               | top · bottom                                                   | top     |
 | Bar size                   | normal · large · extra large (bar and icons stay proportional) | normal  |
-| Bar opacity                | 0 · 10 · ... · 100, 10% steps                                  | 100     |
 | Icon spacing               | small · normal · large                                         | normal  |
+| Bar opacity                | 0 · 10 · ... · 100, 10% steps                                  | 100     |
 | Clock position             | center · right                                                 | center  |
 | Workspace isolation        | on · off                                                       | off     |
-| Notification badges        | on · off                                                       | on      |
 | Scroll to change workspace | on · off                                                       | on      |
+| Notification badges        | on · off                                                       | on      |
+| Battery charge limit       | on · off (quick settings toggle, needs a supported battery)    | on      |
 
 
 ## Author's note

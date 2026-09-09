@@ -114,18 +114,39 @@ Left and middle clicks trigger a short scale-bounce animation on the icon as fee
 
 GSettings schema `org.gnome.shell.extensions.minibar`, prefs window in libadwaita
 with a destructive **Restore defaults** button row at the bottom (resets every key),
-(one page, one group, three rows):
+(one page, one group, one row per key, in the order below):
 
-| Key                  | Type                           | Default  | Effect                                                                                                                                                             |
-| -------------------- | ------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `size`               | `normal` \| `large` \| `extra-large` | `normal` | **Bar size**: top bar height (native ~34px / 40px / 46px) AND icon (24px / 28px / 32px), kept proportional. Non-normal sizes add the matching `minibar-panel-large` / `minibar-panel-extra-large` style class on `Main.panel` (not an inline style: the overview clears `Main.panel.style`), removed on disable     |
-| `spacing`            | `small` \| `normal` \| `large` | `normal` | **Icon spacing**: drives box spacing AND button padding (CSS classes); resulting gap between icons ≈ 4px / 10px / 18px. Small keeps icons close but never touching |
-| `opacity`            | int `0`-`100`, 10% steps       | `100`    | **Bar opacity**: `100` keeps the native theme (no class); below, flat black via `minibar-opacity-N` classes in 10% steps, same not-inline-style pattern as `size`  |
-| `bar-position`       | `top` \| `bottom`              | `top`    | Anchor the whole GNOME panel to the top or bottom screen edge (primary monitor)                                                                                    |
-| `clock-position`     | `center` \| `right`            | `center` | Clock (dateMenu) in the center box or at the left end of the right box; restored to center on disable                                                              |
-| `isolate-workspaces` | bool                           | false    | Only show/count windows of the active workspace                                                                                                                    |
-| `notification-badges` | bool | true | Show the unread notification badge on icons (the MessageTray monitor stays connected either way — accepted trade-off for simplicity) |
-| `scroll-workspace`   | bool                           | true     | Scroll on the top bar switches workspace                                                                                                                           |
+| Key                   | Type                                 | Default  | Effect                                                                                                                                                                                                                                                                                                          |
+| --------------------- | ------------------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bar-position`        | `top` \| `bottom`                    | `top`    | Anchor the whole GNOME panel to the top or bottom screen edge (primary monitor)                                                                                                                                                                                                                                 |
+| `size`                | `normal` \| `large` \| `extra-large` | `normal` | **Bar size**: top bar height (native ~34px / 40px / 46px) AND icon (24px / 28px / 32px), kept proportional. Non-normal sizes add the matching `minibar-panel-large` / `minibar-panel-extra-large` style class on `Main.panel` (not an inline style: the overview clears `Main.panel.style`), removed on disable |
+| `spacing`             | `small` \| `normal` \| `large`       | `normal` | **Icon spacing**: drives box spacing AND button padding (CSS classes); resulting gap between icons ≈ 4px / 10px / 18px. Small keeps icons close but never touching                                                                                                                                              |
+| `opacity`             | int `0`-`100`, 10% steps             | `100`    | **Bar opacity**: `100` keeps the native theme (no class); below, flat black via `minibar-opacity-N` classes in 10% steps, same not-inline-style pattern as `size`                                                                                                                                               |
+| `clock-position`      | `center` \| `right`                  | `center` | Clock (dateMenu) in the center box or at the left end of the right box; restored to center on disable                                                                                                                                                                                                           |
+| `isolate-workspaces`  | bool                                 | false    | Only show/count windows of the active workspace                                                                                                                                                                                                                                                                 |
+| `scroll-workspace`    | bool                                 | true     | Scroll on the top bar switches workspace                                                                                                                                                                                                                                                                        |
+| `notification-badges` | bool                                 | true     | Show the unread notification badge on icons (the MessageTray monitor stays connected either way — accepted trade-off for simplicity)                                                                                                                                                                            |
+| `battery-toggle`      | bool                                 | true     | Add the battery charge limit toggle to the system quick settings (§2.8); ignored when no supported battery is detected                                                                                                                                                                                          |
+
+### 2.8 Battery charge limit (quick settings)
+
+Not a taskbar feature but a small system add-on, kept because it is ~160 lines of
+public API for something the shell only exposes deep in Settings › Power.
+
+- A **Charge Limit toggle** is added to the **system quick settings**, and only if
+  UPower reports a battery whose firmware supports charge thresholds
+  (`ChargeThresholdSupported`). No battery, unsupported firmware, or
+  `battery-toggle` off → nothing is added at all.
+- It mirrors the "Battery Charge" switch of Settings › Power: **on** = preserve
+  battery health (charging stops at the firmware threshold), **off** = charge to
+  100%. The subtitle shows the end threshold (`80%`) while the limit is active.
+- The checked state follows **UPower**, never the click (`g-properties-changed` →
+  resync, `toggleMode` deliberately off): a failed or refused call leaves the toggle
+  where it was, and a change made from gnome-control-center shows up live.
+- Setting the limit needs no authentication: the polkit action
+  `org.freedesktop.UPower.enable-charging-limit` is `allow_active=yes`.
+- The battery lookup runs **once**, asynchronously, at `enable()` — a battery
+  hotplug is not handled (disable/enable the extension to re-run it).
 
 ## 3. Technical specification
 
@@ -147,6 +168,7 @@ src/                       # everything the shell loads (install symlink / zip t
   appButton.js             # per-app button: St.Icon + indicators + badge + gestures
   notifications.js         # MessageTray monitor → Map appId→count
   windowPreview.js         # hover popup: one clickable Clutter.Clone per window
+  battery.js               # UPower charge-limit toggle in the system quick settings
   prefs.js                 # Adw preferences window
   schemas/                 # gschema XML + compiled
   stylesheet.css
@@ -161,18 +183,20 @@ docs/specs/taskbar.md      # this spec
 
 ### 3.3 GNOME Shell (49-50) APIs to use
 
-| Need          | API                                                                                                               |
-| ------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Favorites     | `AppFavorites.getAppFavorites()` + `changed` signal                                                               |
-| Apps/windows  | `Shell.AppSystem.get_default()` (`app-state-changed`), `Shell.WindowTracker.get_default().get_window_app()`       |
-| Windows       | `global.display` (`window-created`, `notify::focus-window`), `Meta.Window` (`unmanaging`, `notify::skip-taskbar`) |
-| Widgets       | `St.BoxLayout` (`orientation` prop, not `vertical`), `St.Icon`, `St.Bin`, `St.DrawingArea` + Cairo for the dashes |
-| Clicks        | **`Clutter.ClickGesture`** (`recognize` signal) — `Clutter.ClickAction` is dead in 49+                            |
-| Panel         | `Main.panel._leftBox.insert_child_at_index()`                                                                     |
-| Menu          | `AppMenu` (`resource:///org/gnome/shell/ui/appMenu.js`) + `PopupMenuManager`                                      |
-| Notifications | `Main.messageTray` (`source-added`/`source-removed`, `notification-added`, `notify::acknowledged`)                |
-| Signals       | `connectObject()` / `disconnectObject()` everywhere                                                               |
-| Timers        | `GLib.idle_add_once` for batched redisplays                                                                       |
+| Need           | API                                                                                                                                                                                              |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Favorites      | `AppFavorites.getAppFavorites()` + `changed` signal                                                                                                                                              |
+| Apps/windows   | `Shell.AppSystem.get_default()` (`app-state-changed`), `Shell.WindowTracker.get_default().get_window_app()`                                                                                      |
+| Windows        | `global.display` (`window-created`, `notify::focus-window`), `Meta.Window` (`unmanaging`, `notify::skip-taskbar`)                                                                                |
+| Widgets        | `St.BoxLayout` (`orientation` prop, not `vertical`), `St.Icon`, `St.Bin`, `St.DrawingArea` + Cairo for the dashes                                                                                |
+| Clicks         | **`Clutter.ClickGesture`** (`recognize` signal) — `Clutter.ClickAction` is dead in 49+                                                                                                           |
+| Panel          | `Main.panel._leftBox.insert_child_at_index()`                                                                                                                                                    |
+| Menu           | `AppMenu` (`resource:///org/gnome/shell/ui/appMenu.js`) + `PopupMenuManager`                                                                                                                     |
+| Notifications  | `Main.messageTray` (`source-added`/`source-removed`, `notification-added`, `notify::acknowledged`)                                                                                               |
+| Quick settings | `QuickToggle`/`SystemIndicator` (`ui/quickSettings.js`) + `Main.panel.statusArea.quickSettings.addExternalIndicator()`                                                                           |
+| Battery        | UPower system bus: `EnumerateDevices`, `org.freedesktop.UPower.Device` (`ChargeThresholdSupported`/`Enabled`, `ChargeEndThreshold`, `EnableChargeThreshold()`), kind check via `gi://UPowerGlib` |
+| Signals        | `connectObject()` / `disconnectObject()` everywhere                                                                                                                                              |
+| Timers         | `GLib.idle_add_once` for batched redisplays                                                                                                                                                      |
 
 ### 3.4 Reconciliation logic (core of the extension)
 
@@ -217,16 +241,17 @@ Feature/LOC ratio and expected fragility across GNOME versions — the arbitrati
 guide when a release breaks something (KISS: a high-risk feature that breaks is a
 candidate for removal, not for growing compat shims):
 
-| Feature                          | ~LOC | Risk     | Fragile point                                                                                                                                                     |
-| -------------------------------- | ---- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Core (favorites+running, clicks) | 350  | low      | stable public APIs                                                                                                                                                |
-| Dash indicators (Cairo)          | 50   | low      | self-contained                                                                                                                                                    |
-| Workspace isolation              | 30   | low      | stable API                                                                                                                                                        |
-| Settings/prefs                   | 110  | low      | Adwaita stable                                                                                                                                                    |
-| Scroll + OSD                     | 45   | medium−  | `WorkspaceSwitcherPopup.display()` signature already changed once                                                                                                 |
-| Notification badge               | 90   | medium   | MessageTray internals churn regularly                                                                                                                             |
-| `ClickGesture`                   | 15   | medium   | API introduced in 49, still young                                                                                                                                 |
-| Hover previews                   | 155  | medium   | grab/hover interactions via `PopupMenuManager`                                                                                                                    |
-| Clock position                   | 15   | medium+  | moves private panel children (`statusArea.dateMenu`)                                                                                                              |
-| Bar opacity                      | 25   | medium   | hardcodes the panel background color (was 100% theme-driven); panel corners (`PanelCorner`) match the theme's color, unverified against an override               |
-| Bar position bottom              | 20   | **HIGH** | fights `LayoutManager._updateBoxes`; the shell assumes a top panel (hot corner, overview animations, OSD placement). First candidate for removal if it misbehaves |
+| Feature                          | ~LOC | Risk     | Fragile point                                                                                                                                                                   |
+| -------------------------------- | ---- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core (favorites+running, clicks) | 350  | low      | stable public APIs                                                                                                                                                              |
+| Dash indicators (Cairo)          | 50   | low      | self-contained                                                                                                                                                                  |
+| Workspace isolation              | 30   | low      | stable API                                                                                                                                                                      |
+| Settings/prefs                   | 110  | low      | Adwaita stable                                                                                                                                                                  |
+| Scroll + OSD                     | 45   | medium−  | `WorkspaceSwitcherPopup.display()` signature already changed once                                                                                                               |
+| Notification badge               | 90   | medium   | MessageTray internals churn regularly                                                                                                                                           |
+| `ClickGesture`                   | 15   | medium   | API introduced in 49, still young                                                                                                                                               |
+| Hover previews                   | 155  | medium   | grab/hover interactions via `PopupMenuManager`                                                                                                                                  |
+| Clock position                   | 15   | medium+  | moves private panel children (`statusArea.dateMenu`)                                                                                                                            |
+| Bar opacity                      | 25   | medium   | hardcodes the panel background color (was 100% theme-driven); panel corners (`PanelCorner`) match the theme's color, unverified against an override                             |
+| Battery charge limit             | 160  | medium   | UPower's `ChargeThreshold*` API is young (1.90+, and the shell's own interface XML does not carry it yet); `addExternalIndicator()` is public, the grid layout behind it is not |
+| Bar position bottom              | 20   | **HIGH** | fights `LayoutManager._updateBoxes`; the shell assumes a top panel (hot corner, overview animations, OSD placement). First candidate for removal if it misbehaves               |

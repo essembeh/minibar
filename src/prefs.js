@@ -88,6 +88,14 @@ export default class TaskbarPrefs extends ExtensionPreferences {
             Gio.SettingsBindFlags.DEFAULT);
         group.add(badgesRow);
 
+        const batteryRow = new Adw.SwitchRow({
+            title: 'Battery charge limit',
+            subtitle: 'Charge limit toggle in the quick settings (needs a supported battery)',
+        });
+        settings.bind('battery-toggle', batteryRow, 'active',
+            Gio.SettingsBindFlags.DEFAULT);
+        group.add(batteryRow);
+
         const resetGroup = new Adw.PreferencesGroup();
         page.add(resetGroup);
         const resetRow = new Adw.ButtonRow({title: 'Restore defaults'});

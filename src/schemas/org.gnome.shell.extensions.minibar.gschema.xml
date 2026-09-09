@@ -55,6 +55,11 @@
       <summary>Notification badges</summary>
       <description>Show a badge with the unread notification count on app icons.</description>
     </key>
+    <key name="battery-toggle" type="b">
+      <default>true</default>
+      <summary>Battery charge limit toggle</summary>
+      <description>Add a charge limit toggle to the system quick settings when the battery firmware supports charge thresholds.</description>
+    </key>
     <key name="scroll-workspace" type="b">
       <default>true</default>
       <summary>Scroll to change workspace</summary>
