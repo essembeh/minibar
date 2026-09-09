@@ -32,8 +32,7 @@ jobs:
           glib-compile-schemas src/schemas/
           cd src
           zip -r "../$UUID.shell-extension.zip" \
-            extension.js taskbar.js appButton.js notifications.js \
-            windowPreview.js prefs.js metadata.json stylesheet.css schemas/
+            *.js metadata.json stylesheet.css schemas/
 
       - uses: actions/upload-artifact@v4
         with:
