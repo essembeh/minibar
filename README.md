@@ -13,9 +13,10 @@ the left of the top bar — nothing more.
 - 🎯 **App icons** in the top bar: pinned favorites first and always visible, then
   other running apps, one icon per app.
 - 💄 **Dashes** under each icon: one per open window, accent color when focused.
-- ✨ **A few extras**: notification badges on icons, scroll on the bar to switch
-  workspace, adjustable bar opacity, size and position, clock position, a battery
-  charge limit toggle in the quick settings... maybe more, but not too much.
+- ✨ **A few extras**: an applications button opening the app grid (in place of the
+  native workspace indicator), notification badges on icons, scroll on the bar to switch
+  workspace, adjustable bar opacity, size and position, clock position, a battery charge
+  limit toggle in the quick settings... maybe more, but not too much.
 - 🧩 **Stock GNOME everywhere else**: native app menus, native workspace OSD, native
   panel — Minibar adds a taskbar, it does not reskin the shell.
 
@@ -84,17 +85,18 @@ the bar feels, and hardcodes the rest.
 
 ![Minibar settings](docs/images/settings.png)
 
-| Setting                    | Values                                                         | Default |
-| -------------------------- | -------------------------------------------------------------- | ------- |
-| Bar position               | top · bottom                                                   | top     |
-| Bar size                   | normal · large · extra large (bar and icons stay proportional) | normal  |
-| Icon spacing               | small · normal · large                                         | normal  |
-| Bar opacity                | 0 · 10 · ... · 100, 10% steps                                  | 100     |
-| Clock position             | center · right                                                 | center  |
-| Workspace isolation        | on · off                                                       | off     |
-| Scroll to change workspace | on · off                                                       | on      |
-| Notification badges        | on · off                                                       | on      |
-| Battery charge limit       | on · off (quick settings toggle, needs a supported battery)    | on      |
+| Setting                         | Values                                                         | Default |
+| ------------------------------- | -------------------------------------------------------------- | ------- |
+| Bar position                    | top · bottom                                                   | top     |
+| Bar size                        | normal · large · extra large (bar and icons stay proportional) | normal  |
+| Icon spacing                    | small · normal · large                                         | normal  |
+| Bar opacity                     | 0 · 10 · ... · 100, 10% steps                                  | 100     |
+| Clock position                  | center · right                                                 | center  |
+| Replace the workspace indicator | on · off (app grid button instead)                             | off     |
+| Workspace isolation             | on · off                                                       | off     |
+| Scroll to change workspace      | on · off                                                       | on      |
+| Notification badges             | on · off                                                       | on      |
+| Battery charge limit            | on · off (quick settings toggle, needs a supported battery)    | on      |
 
 
 ## Author's note

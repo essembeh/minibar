@@ -64,6 +64,14 @@ export default class TaskbarPrefs extends ExtensionPreferences {
         addComboRow('clock-position', 'Clock position', 'Where the clock is shown',
             ['center', 'right'], ['Center', 'Right']);
 
+        const appsButtonRow = new Adw.SwitchRow({
+            title: 'Replace the workspace indicator',
+            subtitle: 'Use a button opening the app grid instead',
+        });
+        settings.bind('apps-button', appsButtonRow, 'active',
+            Gio.SettingsBindFlags.DEFAULT);
+        group.add(appsButtonRow);
+
         const isolateRow = new Adw.SwitchRow({
             title: 'Workspace isolation',
             subtitle: 'Only show windows from the current workspace',

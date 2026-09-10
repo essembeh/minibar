@@ -45,6 +45,11 @@
       <summary>Clock position</summary>
       <description>Show the clock in the center or on the right of the panel.</description>
     </key>
+    <key name="apps-button" type="b">
+      <default>false</default>
+      <summary>Applications button</summary>
+      <description>Replace GNOME's native workspace indicator with a button opening the overview app grid.</description>
+    </key>
     <key name="isolate-workspaces" type="b">
       <default>false</default>
       <summary>Workspace isolation</summary>

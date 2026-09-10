@@ -10,6 +10,7 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import {WorkspaceSwitcherPopup} from 'resource:///org/gnome/shell/ui/workspaceSwitcherPopup.js';
 
 import {AppButton, getAppWindows} from './appButton.js';
+import {AppsButton} from './appsButton.js';
 
 const SPACING_VALUES = ['small', 'normal', 'large'];
 // Style class (see stylesheet.css) rather than an inline style: the overview
@@ -38,6 +39,7 @@ class Taskbar extends St.BoxLayout {
         this._settings = settings;
         // appId → AppButton, kept in display order for non-favorite stability.
         this._buttons = new Map();
+        this._appsButton = null;
         this._menuManager = new PopupMenu.PopupMenuManager(this);
         this._redisplayQueued = false;
         this._destroyed = false;
@@ -65,6 +67,7 @@ class Taskbar extends St.BoxLayout {
             'changed::notification-badges', () => this._updateButtons(),
             'changed::bar-position', () => this._updateBarPosition(),
             'changed::clock-position', () => this._updateClockPosition(),
+            'changed::apps-button', () => this._updateAppsButton(),
             'changed::opacity', () => this._updatePanelOpacity(),
             this);
         // Re-anchor the panel after the layout manager resets it to the top.
@@ -73,6 +76,7 @@ class Taskbar extends St.BoxLayout {
         Main.layoutManager.panelBox.connectObject(
             'notify::height', () => this._updateBarPosition(), this);
         this._updateSpacing();
+        this._updateAppsButton();
         this._updatePanelHeight();
         this._updatePanelOpacity();
         this._updateBarPosition();
@@ -96,6 +100,34 @@ class Taskbar extends St.BoxLayout {
         for (const v of SPACING_VALUES)
             this.remove_style_class_name(`taskbar-spacing-${v}`);
         this.add_style_class_name(`taskbar-spacing-${value}`);
+    }
+
+    _updateAppsButton() {
+        const wanted = this._settings.get_boolean('apps-button');
+        if (wanted && !this._appsButton) {
+            this._appsButton = new AppsButton(this._settings);
+            // First child of the taskbar, i.e. leftmost item of the panel once
+            // GNOME's own workspace indicator is hidden below.
+            this.insert_child_at_index(this._appsButton, 0);
+        } else if (!wanted && this._appsButton) {
+            this._appsButton.destroy();
+            this._appsButton = null;
+        }
+        // One slot on the left: either GNOME's workspace pills, or our button.
+        this._setActivitiesVisible(!wanted);
+    }
+
+    _setActivitiesVisible(visible) {
+        // 'activities' is the native workspace indicator since GNOME 48 (the
+        // former Activities button); same statusArea access pattern as the
+        // clock. Restored in _onDestroy().
+        const container = Main.panel.statusArea.activities?.container;
+        if (!container)
+            return;
+        if (visible)
+            container.show();
+        else
+            container.hide();
     }
 
     _updateBarPosition() {
@@ -144,6 +176,10 @@ class Taskbar extends St.BoxLayout {
         this._updatePanelHeight();
         this._buttons.forEach(button => button.destroy());
         this._buttons.clear();
+        // Rebuilt too: its icon size follows the 'size' setting.
+        this._appsButton?.destroy();
+        this._appsButton = null;
+        this._updateAppsButton();
         this._queueRedisplay();
     }
 
@@ -250,7 +286,10 @@ class Taskbar extends St.BoxLayout {
         }
 
         const ordered = new Map();
-        desired.forEach((app, index) => {
+        // The apps button, when shown, always sits before the app icons.
+        const offset = this._appsButton ? 1 : 0;
+        desired.forEach((app, i) => {
+            const index = i + offset;
             const id = app.get_id();
             let button = this._buttons.get(id);
             if (!button) {
@@ -270,6 +309,8 @@ class Taskbar extends St.BoxLayout {
     _onDestroy() {
         this._destroyed = true;
         this._buttons.clear();
+        this._appsButton = null;
+        this._setActivitiesVisible(true);
         this._workspaceSwitcherPopup?.destroy();
         Object.values(PANEL_SIZE_CLASSES).forEach(cls =>
             Main.panel.remove_style_class_name(cls));

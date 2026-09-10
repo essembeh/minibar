@@ -36,8 +36,10 @@ BEFORE implementing.
 ### 2.1 Placement
 
 - Icons are inserted into the **`_leftBox` of the native GNOME panel** (`Main.panel`),
-  **to the right of the workspace indicator** (workspace-indicator extension), i.e. at
-  the last position of the `_leftBox`.
+  **to the right of the workspace indicator** (GNOME's native one, or the
+  workspace-indicator extension), i.e. at the last position of the `_leftBox`. With the
+  apps button on (§2.9), the native indicator is hidden and the taskbar is the leftmost
+  panel item.
 - The native panel is never recreated; it can however be **relocated to the bottom**
   edge of the primary monitor via the `bar-position` setting (the `panelBox` is
   re-anchored after every `monitors-changed`/height change, and restored on disable).
@@ -123,6 +125,7 @@ with a destructive **Restore defaults** button row at the bottom (resets every k
 | `spacing`             | `small` \| `normal` \| `large`       | `normal` | **Icon spacing**: drives box spacing AND button padding (CSS classes); resulting gap between icons ≈ 4px / 10px / 18px. Small keeps icons close but never touching                                                                                                                                              |
 | `opacity`             | int `0`-`100`, 10% steps             | `100`    | **Bar opacity**: `100` keeps the native theme (no class); below, flat black via `minibar-opacity-N` classes in 10% steps, same not-inline-style pattern as `size`                                                                                                                                               |
 | `clock-position`      | `center` \| `right`                  | `center` | Clock (dateMenu) in the center box or at the left end of the right box; restored to center on disable                                                                                                                                                                                                           |
+| `apps-button`         | bool                                 | false    | Replace GNOME's native workspace indicator with a button opening the overview app grid (§2.9)                                                                                                                                                                                                                   |
 | `isolate-workspaces`  | bool                                 | false    | Only show/count windows of the active workspace                                                                                                                                                                                                                                                                 |
 | `scroll-workspace`    | bool                                 | true     | Scroll on the top bar switches workspace                                                                                                                                                                                                                                                                        |
 | `notification-badges` | bool                                 | true     | Show the unread notification badge on icons (the MessageTray monitor stays connected either way — accepted trade-off for simplicity)                                                                                                                                                                            |
@@ -148,6 +151,32 @@ public API for something the shell only exposes deep in Settings › Power.
 - The battery lookup runs **once**, asynchronously, at `enable()` — a battery
   hotplug is not handled (disable/enable the extension to re-run it).
 
+### 2.9 Applications button
+
+- The `apps-button` setting picks **what occupies the leftmost panel slot**: off
+  (default) leaves GNOME's native workspace indicator alone
+  (`Main.panel.statusArea.activities`, the workspace pills that replaced the Activities
+  button in 48); on hides it and inserts an apps button as the **first child of the
+  taskbar box**. Both are never shown at once — one slot, one item.
+- The indicator is hidden through its `container` (same `statusArea` access pattern as
+  the clock, §2.7 `clock-position`) and **shown again on `disable()`**.
+- Icon `view-app-grid-symbolic`, same icon size and padding as the app buttons, with
+  an empty strip below matching the instance-indicator strip so every icon of the bar
+  stays aligned.
+- Click → **toggles the native overview app grid**: `Main.overview.showApps()`, or
+  `Main.overview.hide()` when the overview is already showing the apps page. No custom
+  menu, no categories: search, folders, pagination and drag-and-drop all come from the
+  shell for free (see the rejected alternatives below).
+- No state highlight when the app grid is open (KISS: it would mean tracking overview
+  signals for a purely cosmetic effect).
+
+**Rejected alternatives** (kept here so the trade-off is not re-litigated): a popup
+menu with XDG categories (apps-menu / ArcMenu style) needs `gi://GMenu` — an external
+`gnome-menus` dependency not guaranteed to be installed — relies on a category
+taxonomy that Flatpak-era `.desktop` files fill poorly, and is unusable past ~30 apps
+without reimplementing search. A flat `Shell.AppSystem.get_installed()` list avoids
+the dependency but is strictly worse than the app grid.
+
 ## 3. Technical specification
 
 ### 3.1 Constraints
@@ -168,6 +197,7 @@ src/                       # everything the shell loads (install symlink / zip t
   appButton.js             # per-app button: St.Icon + indicators + badge + gestures
   notifications.js         # MessageTray monitor → Map appId→count
   windowPreview.js         # hover popup: one clickable Clutter.Clone per window
+  appsButton.js            # optional button toggling the overview app grid
   battery.js               # UPower charge-limit toggle in the system quick settings
   prefs.js                 # Adw preferences window
   schemas/                 # gschema XML + compiled
@@ -192,6 +222,7 @@ docs/specs/taskbar.md      # this spec
 | Clicks         | **`Clutter.ClickGesture`** (`recognize` signal) — `Clutter.ClickAction` is dead in 49+                                                                                                           |
 | Panel          | `Main.panel._leftBox.insert_child_at_index()`                                                                                                                                                    |
 | Menu           | `AppMenu` (`resource:///org/gnome/shell/ui/appMenu.js`) + `PopupMenuManager`                                                                                                                     |
+| App grid       | `Main.overview.showApps()`, `Main.panel.statusArea.activities` hidden in its place                                                                                                               |
 | Notifications  | `Main.messageTray` (`source-added`/`source-removed`, `notification-added`, `notify::acknowledged`)                                                                                               |
 | Quick settings | `QuickToggle`/`SystemIndicator` (`ui/quickSettings.js`) + `Main.panel.statusArea.quickSettings.addExternalIndicator()`                                                                           |
 | Battery        | UPower system bus: `EnumerateDevices`, `org.freedesktop.UPower.Device` (`ChargeThresholdSupported`/`Enabled`, `ChargeEndThreshold`, `EnableChargeThreshold()`), kind check via `gi://UPowerGlib` |
@@ -246,6 +277,7 @@ candidate for removal, not for growing compat shims):
 | Core (favorites+running, clicks) | 350  | low      | stable public APIs                                                                                                                                                              |
 | Dash indicators (Cairo)          | 50   | low      | self-contained                                                                                                                                                                  |
 | Workspace isolation              | 30   | low      | stable API                                                                                                                                                                      |
+| Apps button                      | 45   | medium   | `showApps()` is public, but hiding `statusArea.activities` pokes a private panel child                                                                                          |
 | Settings/prefs                   | 110  | low      | Adwaita stable                                                                                                                                                                  |
 | Scroll + OSD                     | 45   | medium−  | `WorkspaceSwitcherPopup.display()` signature already changed once                                                                                                               |
 | Notification badge               | 90   | medium   | MessageTray internals churn regularly                                                                                                                                           |
